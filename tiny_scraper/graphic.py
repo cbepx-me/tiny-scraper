@@ -12,7 +12,7 @@ screen_resolutions = {
     2: (720, 480, 11)
 }
 
-screen_width, screen_height = screen_resolutions.get(hw_info, (640, 480))
+screen_width, screen_height , max_elem = screen_resolutions.get(hw_info, (640, 480, 11))
 bytes_per_pixel = 4
 screen_size = screen_width * screen_height * bytes_per_pixel
 fb_screeninfo = None
