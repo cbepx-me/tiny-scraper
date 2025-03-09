@@ -14,6 +14,7 @@ from systems import get_system_id
 from PIL import Image
 from io import BytesIO
 
+ver="v1.1"
 translator = Translator(system_lang)
 selected_position = 0
 roms_selected_position = 0
@@ -104,7 +105,7 @@ def load_console_menu() -> None:
     gr.draw_clear()
 
     gr.draw_rectangle_r([10, 40, x_size - 10, y_size - 40], 15, fill=gr.colorGrayD2, outline=None)
-    gr.draw_text((x_size / 2, 20), f"{translator.translate('Tiny Scraper')}", font=17, anchor="mm")
+    gr.draw_text((x_size / 2, 20), f"{translator.translate('Tiny Scraper')} {ver}", font=17, anchor="mm")
 
     if len(available_systems) > 1:
         start_idx = int(selected_position / max_elem) * max_elem
