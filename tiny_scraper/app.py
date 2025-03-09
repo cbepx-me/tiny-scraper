@@ -11,6 +11,8 @@ import socket
 from anbernic import Anbernic
 from scraper import Scraper
 from systems import get_system_id
+from PIL import Image
+from io import BytesIO
 
 translator = Translator(system_lang)
 selected_position = 0
@@ -23,7 +25,7 @@ skip_input_check = False
 
 x_size, y_size, max_elem = screen_resolutions.get(hw_info, (640, 480, 11))
 
-button_x = x_size - 110
+button_x = x_size - 130
 button_y = y_size - 30
 ratio = y_size / x_size
 
@@ -117,7 +119,7 @@ def load_console_menu() -> None:
             (x_size / 2, y_size / 2), f"{translator.translate('No roms found in TF')} {an.get_sd_storage()}", anchor="mm"
         )
 
-    button_circle((button_x-110, button_y), "Y", f"TF: {an.get_sd_storage()}")
+    button_circle((button_x-120, button_y), "Y", f"TF: {an.get_sd_storage()}")
     button_circle((button_x, button_y), "M", f"{translator.translate('Exit')}")
 
     gr.draw_paint()
@@ -169,7 +171,7 @@ def load_roms_menu() -> None:
         )
         if screenshot:
             img_path: Path = imgs_folder / f"{rom.name}.png"
-            img_path.write_bytes(screenshot)
+            save_screenshot(img_path, screenshot)
             gr.draw_log(
                 f"{translator.translate('Scraping completed')}", fill=gr.colorBlue, outline=gr.colorBlueD1
             )
@@ -198,7 +200,7 @@ def load_roms_menu() -> None:
                 )
                 if screenshot:
                     img_path: Path = imgs_folder / f"{rom.name}.png"
-                    img_path.write_bytes(screenshot)
+                    save_screenshot(img_path, screenshot)
                     print(f"Done scraping {rom.name}. Saved file to {img_path}")
                     success += 1
                 else:
@@ -270,13 +272,22 @@ def load_roms_menu() -> None:
             i == (roms_selected_position % max_elem),
         )
 
-    button_rectangle((20, button_y), "Start", f"{translator.translate('D. All')}")
-    button_circle((190, button_y), "A", f"{translator.translate('Download')}")
-    button_circle((320, button_y), "B", f"{translator.translate('Back')}")
+    button_rectangle((10, button_y), "Start", f"{translator.translate('D. All')}")
+    button_circle((250, button_y), "A", f"{translator.translate('Download')}")
+    button_circle((button_x - 120, button_y), "B", f"{translator.translate('Back')}")
     button_circle((button_x, button_y), "M", f"{translator.translate('Exit')}")
 
     gr.draw_paint()
 
+def save_screenshot(img_path: Path, screenshot: bytes) -> None:
+    if scraper.resize:
+        print("Resizing image...")
+        img = Image.open(BytesIO(screenshot))
+        target_size = (320, 240)
+        img = img.resize(target_size, Image.LANCZOS)
+        img.save(img_path)
+    else:
+        img_path.write_bytes(screenshot)
 
 def row_list(text: str, pos: tuple[int, int], width: int, selected: bool) -> None:
     gr.draw_rectangle_r(
