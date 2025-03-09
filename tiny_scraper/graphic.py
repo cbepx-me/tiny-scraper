@@ -62,11 +62,12 @@ def get_fb_screeninfo():
     return fb_screeninfo
 
 def screen_reset():
-    ioctl(
-        fb,
-        0x4601,
-        fb_screeninfo,
-    )
+    if fb_screeninfo is not None:
+        ioctl(
+            fb,
+            0x4601,
+            bytearray(fb_screeninfo),
+        )
     ioctl(fb, 0x4611, 0)
 
 
