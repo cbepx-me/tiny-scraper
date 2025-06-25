@@ -14,7 +14,7 @@ from systems import get_system_id
 from PIL import Image
 from io import BytesIO
 
-ver="v1.1"
+ver="v1.2"
 translator = Translator(system_lang)
 selected_position = 0
 roms_selected_position = 0
@@ -30,14 +30,21 @@ button_x = x_size - 130
 button_y = y_size - 30
 ratio = y_size / x_size
 
-
 def is_connected():
-    try:
-        sock = socket.create_connection(("1.1.1.1", 53), timeout=3)
-        sock.close()
-        return True
-    except (socket.timeout, socket.error):
-        return False
+    test_servers = [
+        ("8.8.8.8", 53),  # google
+        ("1.1.1.1", 53),       # NTP DNS
+        ("223.5.5.5", 53),       # ali DNS
+        ("220.181.38.148", 80)   # baidu
+    ]
+    for host, port in test_servers:
+        try:
+            sock = socket.create_connection((host, port), timeout=3)
+            sock.close()
+            return True
+        except (socket.timeout, socket.error):
+            continue
+    return False
 
 
 def start(config_path: str) -> None:
@@ -82,11 +89,23 @@ def load_console_menu() -> None:
 
     if available_systems:
         if input.key("DY"):
-            selected_position += input.value
-            if selected_position < 0:
-                selected_position = len(available_systems) - 1
-            elif selected_position >= len(available_systems):
-                selected_position = 0
+            selected_position = (selected_position + input.value) % len(available_systems)
+        elif input.key("L1"):
+            if selected_position > 0:
+                selected_position = max(0, selected_position - max_elem)
+        elif input.key("R1"):
+            if selected_position < len(available_systems) - 1:
+                selected_position = min(
+                    len(available_systems) - 1, selected_position + max_elem
+                )
+        elif input.key("L2"):
+            if selected_position > 0:
+                selected_position = max(0, selected_position - 100)
+        elif input.key("R2"):
+            if selected_position < len(available_systems) - 1:
+                selected_position = min(
+                    len(available_systems) - 1, selected_position + 100
+                )
         elif input.key("A"):
             selected_system = available_systems[selected_position]
             current_window = "roms"
@@ -137,13 +156,18 @@ def load_roms_menu() -> None:
     exit_menu = False
     roms_list = scraper.get_roms(an.get_sd_storage_path(), selected_system)
     system_path = Path(an.get_sd_storage_path()) / selected_system
-    imgs_folder = Path(f"{an.get_sd_storage_path()}/{selected_system}/Imgs")
 
-    if not imgs_folder.exists():
-        imgs_folder.mkdir()
-        imgs_files: List[str] = []
-    else:
-        imgs_files = scraper.get_image_files_without_extension(imgs_folder)
+    rom_folders = set((system_path / rom.filename).parent for rom in roms_list)
+
+    for folder in rom_folders:
+        imgs_folder = folder / "Imgs"
+        if not imgs_folder.exists():
+            imgs_folder.mkdir(parents=True, exist_ok=True)
+
+    imgs_files = set()
+    for folder in rom_folders:
+        imgs_folder = folder / "Imgs"
+        imgs_files.update(scraper.get_image_files_without_extension(imgs_folder))
 
     roms_without_image = list(set([rom for rom in roms_list if rom.name not in imgs_files]))
     roms_without_image.sort(key=lambda x: x.name)
@@ -166,7 +190,11 @@ def load_roms_menu() -> None:
         gr.draw_log(f"{translator.translate('Scraping...')}", fill=gr.colorBlue, outline=gr.colorBlueD1)
         gr.draw_paint()
         rom = roms_without_image[roms_selected_position]
-        rom.set_crc(scraper.get_crc32_from_file(system_path / rom.filename))
+        rom_path = system_path / rom.filename
+        imgs_folder = rom_path.parent / "Imgs"
+        if not imgs_folder.exists():
+            imgs_folder.mkdir(parents=True, exist_ok=True)
+        rom.set_crc(scraper.get_crc32_from_file(rom_path))
         screenshot = scraper.scrape_screenshot(
             game_name=rom.name, crc=rom.crc, system_id=system_id
         )
@@ -195,7 +223,11 @@ def load_roms_menu() -> None:
         gr.draw_paint()
         for rom in roms_without_image:
             if rom.name not in imgs_files:
-                rom.set_crc(scraper.get_crc32_from_file(system_path / rom.filename))
+                rom_path = system_path / rom.filename
+                imgs_folder = rom_path.parent / "Imgs"
+                if not imgs_folder.exists():
+                    imgs_folder.mkdir(parents=True, exist_ok=True)
+                rom.set_crc(scraper.get_crc32_from_file(rom_path))
                 screenshot: Optional[bytes] = scraper.scrape_screenshot(
                     game_name=rom.name, crc=rom.crc, system_id=system_id
                 )
@@ -224,11 +256,7 @@ def load_roms_menu() -> None:
         time.sleep(4)
         exit_menu = True
     elif input.key("DY"):
-        roms_selected_position += input.value
-        if roms_selected_position < 0:
-            roms_selected_position = len(roms_without_image) - 1
-        elif roms_selected_position >= len(roms_without_image):
-            roms_selected_position = 0
+        roms_selected_position = (roms_selected_position + input.value) % len(roms_without_image)
     elif input.key("L1"):
         if roms_selected_position > 0:
             roms_selected_position = max(0, roms_selected_position - max_elem)

@@ -68,15 +68,15 @@ class Scraper:
             print(f"No extensions found for system: {system}")
             return roms
 
-        for file in os.listdir(system_path):
-            file_path = Path(system_path) / file
-            if file.startswith(".") or file.startswith("-"):
+        for file_path in system_path.rglob("*"):
+            if file_path.name.startswith(".") or file_path.name.startswith("-"):
                 continue
             if file_path.is_file():
                 file_extension = file_path.suffix.lower().lstrip(".")
                 if file_extension in system_extensions:
                     name = file_path.stem
-                    rom = Rom(filename=file, name=name)
+                    rel_path = file_path.relative_to(system_path)
+                    rom = Rom(filename=str(rel_path), name=name)
                     roms.append(rom)
 
         return roms
