@@ -156,7 +156,8 @@ def draw_log(text, fill="Black", outline="black", width=500, font=15):
     current_line = ""
     for word in text.split():
         test_line = f"{current_line} {word}".strip() if current_line else word
-        test_width = font_obj.getsize(test_line)[0]
+        bbox = font_obj.getbbox(test_line)
+        test_width = bbox[2] - bbox[0]
         
         if test_width <= max_width:
             current_line = test_line
@@ -165,7 +166,8 @@ def draw_log(text, fill="Black", outline="black", width=500, font=15):
                 lines.append(current_line)
                 current_line = ""
             
-            word_width = font_obj.getsize(word)[0]
+            bbox = font_obj.getbbox(word)
+            word_width = bbox[2] - bbox[0]
             if word_width <= max_width:
                 current_line = word
             else:
@@ -174,7 +176,9 @@ def draw_log(text, fill="Black", outline="black", width=500, font=15):
                     substring = ""
                     for char in remaining:
                         temp_sub = substring + char
-                        if font_obj.getsize(temp_sub)[0] <= max_width:
+                        bbox = font_obj.getbbox(temp_sub)
+                        temp_width = bbox[2] - bbox[0]
+                        if temp_width <= max_width:
                             substring = temp_sub
                         else:
                             break
@@ -186,13 +190,14 @@ def draw_log(text, fill="Black", outline="black", width=500, font=15):
     if current_line:
         lines.append(current_line)
 
-    line_height = font_obj.getsize("A")[1]
+    ascent, descent = font_obj.getmetrics()
+    line_height = int((ascent + descent) * 1.2)
     total_height = len(lines) * line_height
     start_y = y + (rect_height - total_height) // 2
 
     for i, line in enumerate(lines):
         text_x = x + width / 2
-        text_y = start_y + i * line_height + 10
+        text_y = start_y + i * line_height + ascent
         draw_text((text_x, text_y), line, font, anchor="mm")
 
 
@@ -211,7 +216,8 @@ def draw_help(text, fill="Black", outline="black", width=500, font=15):
     current_line = ""
     for word in text.split():
         test_line = f"{current_line} {word}".strip() if current_line else word
-        test_width = font_obj.getsize(test_line)[0]
+        bbox = font_obj.getbbox(test_line)
+        test_width = bbox[2] - bbox[0]
         
         if test_width <= max_width:
             current_line = test_line
@@ -220,7 +226,8 @@ def draw_help(text, fill="Black", outline="black", width=500, font=15):
                 lines.append(current_line)
                 current_line = ""
             
-            word_width = font_obj.getsize(word)[0]
+            bbox = font_obj.getbbox(word)
+            word_width = bbox[2] - bbox[0]
             if word_width <= max_width:
                 current_line = word
             else:
@@ -229,7 +236,9 @@ def draw_help(text, fill="Black", outline="black", width=500, font=15):
                     substring = ""
                     for char in remaining:
                         temp_sub = substring + char
-                        if font_obj.getsize(temp_sub)[0] <= max_width:
+                        bbox = font_obj.getbbox(temp_sub)
+                        temp_width = bbox[2] - bbox[0]
+                        if temp_width <= max_width:
                             substring = temp_sub
                         else:
                             break
@@ -241,7 +250,8 @@ def draw_help(text, fill="Black", outline="black", width=500, font=15):
     if current_line:
         lines.append(current_line)
 
-    line_height = font_obj.getsize("A")[1]
+    ascent, descent = font_obj.getmetrics()
+    line_height = int((ascent + descent) * 1)
     total_height = len(lines) * line_height
     start_y = y + (rect_height - total_height) // 2
 
